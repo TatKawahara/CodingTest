@@ -511,8 +511,6 @@ class Solver {
     }
 
     void solve() {
-        /*
-
         if (node_num <= 16) {
             SmallCaseSolver<long double> small_case_solver(graph);
             route = small_case_solver.solve();
@@ -520,11 +518,6 @@ class Solver {
             LargeCaseSolver<long double> large_case_solver(graph);
             route = large_case_solver.solve();
         }
-
-        */
-
-        LargeCaseSolver<long double> large_case_solver(graph);
-        route = large_case_solver.solve();
 
         for (int &node : route) {
             node = id_compressor[node];
