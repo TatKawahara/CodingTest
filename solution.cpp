@@ -220,8 +220,8 @@ class PathMaker {
     }
 
     void run() {
-        if (start == -1) {
-            make_path_greedy(goal);
+        if (goal == -1) {
+            make_path_greedy(start);
         } else {
             used.resize(graph.size(), false);
             deapth_first_search(start);
@@ -328,16 +328,24 @@ class LargeCaseSolver {
                 new_distance -= edge_distance_list[i];
             }
 
-            int start_node = (start_path_id == 0 ? -1 : path[start_path_id - 1]);
-            int goal_node = path[end_path_id + 1];
+            int start_node = (start_path_id == 0 ? path.back() : path[start_path_id - 1]);
+            int goal_node  = (start_path_id == 0 ?      -1     : path[end_path_id + 1]);
             
             PathMaker<long double> path_maker(graph, visited, 
                                             start_node, goal_node,
                                             delete_path_length * 5);
             path_maker.run();
 
-            for (int i = 0; i < path_maker.best_edge_distance_list.size(); i++) {
-                new_distance += path_maker.best_edge_distance_list[i];
+            if (path_maker.best_path.size() == 0) {
+                for (int i = start_path_id; i <= end_path_id; i++) {
+                    visited[path[i]] = true;
+                }
+                continue;
+            }
+            
+            std::vector<T> &edge_distance_add = path_maker.best_edge_distance_list;
+            for (int i = 0; i < edge_distance_add.size(); i++) {
+                new_distance += edge_distance_add[i];
             }
 
             T diff = new_distance - distance;
@@ -345,8 +353,7 @@ class LargeCaseSolver {
                 std::vector<int> new_path;
                 std::vector<int> &path_add = path_maker.best_path;
                 std::vector<T> new_edge_distance_list;
-                std::vector<T> &edge_distance_add = path_maker.best_edge_distance_list;
-                if (start_node != -1) {
+                if (goal_node != -1) {
                     for (int i = 0; i < start_path_id; i++) {
                         new_path.emplace_back(path[i]);
                     }
@@ -370,23 +377,21 @@ class LargeCaseSolver {
                         new_edge_distance_list.emplace_back(edge_distance_list[i]);
                     }
                 } else {
-                    std::reverse(path_add.begin(), path_add.end());
+                    for (int i = end_path_id + 1; i < path.size(); i++) {
+                        new_path.emplace_back(path[i]);
+                    }
                     for (int i = 0; i < path_add.size(); i++) { 
                         if (path_add[i] != start_node && path_add[i] != goal_node) {
                             new_path.emplace_back(path_add[i]);
                             visited[path_add[i]] = true;
                         }
                     }
-                    for (int i = end_path_id + 1; i < path.size(); i++) {
-                        new_path.emplace_back(path[i]);
-                    }
 
-                    std::reverse(edge_distance_add.begin(), edge_distance_add.end());
-                    for (int i = 0; i < edge_distance_add.size(); i++) {
-                        new_edge_distance_list.emplace_back(edge_distance_add[i]);
-                    }
                     for (int i = end_path_id + 1; i < edge_distance_list.size(); i++) {
                         new_edge_distance_list.emplace_back(edge_distance_list[i]);
+                    }
+                    for (int i = 0; i < edge_distance_add.size(); i++) {
+                        new_edge_distance_list.emplace_back(edge_distance_add[i]);
                     }
                 }
                 path = new_path;
@@ -506,6 +511,8 @@ class Solver {
     }
 
     void solve() {
+        /*
+
         if (node_num <= 16) {
             SmallCaseSolver<long double> small_case_solver(graph);
             route = small_case_solver.solve();
@@ -513,6 +520,11 @@ class Solver {
             LargeCaseSolver<long double> large_case_solver(graph);
             route = large_case_solver.solve();
         }
+
+        */
+
+        LargeCaseSolver<long double> large_case_solver(graph);
+        route = large_case_solver.solve();
 
         for (int &node : route) {
             node = id_compressor[node];
