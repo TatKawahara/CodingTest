@@ -521,9 +521,8 @@ class Solver {
 
     void output() {
         for (int node : route) {
-            std::cout << node << " ";
+            std::cout << node << "\r\n";
         }
-        std::cout << "\n";
     }
 };
 
