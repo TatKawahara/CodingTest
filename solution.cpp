@@ -435,7 +435,7 @@ class Compressor {
 
     int get_compressed_id(const T &x) const {
         int id = std::lower_bound(data.begin(), data.end(), x) - data.begin();
-        assert(data.at(id) == x);
+        assert(data[id] == x);
         return id;
     }
 
