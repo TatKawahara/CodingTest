@@ -10,6 +10,18 @@
 #include <vector>
 
 template <class T>
+void out(const std::string s, std::vector<T> &a, const int add = 0) {
+    std::cout << s << "\n";
+    for (auto x : a) { std::cout << x + add << " "; }
+    std::cout << "\n";
+}
+
+template <class T>
+void out(const std::string s, const T x, const int add = 0) {
+    std::cout << s << "\n" << x + add << "\n";
+}
+
+template <class T>
 class Edge {
   public:
     int start, end;
@@ -141,9 +153,19 @@ template <class T>
 class PathMaker {
   public:
     Graph<T> &graph;
-    std::vector<int> path;
+
     std::vector<bool> visited;
+    std::vector<bool> used;
+
+    std::vector<int> path;
     std::vector<T> edge_distance_list;
+
+    std::vector<int> best_path;
+    std::vector<T> best_edge_distance_list;
+
+    T distance = 0;
+    T longest_distance = 0;
+
     int start, goal;
     int remaining_search_cnt;
 
@@ -155,7 +177,7 @@ class PathMaker {
     void make_path_greedy(int node) {
         while (true) {
             if (visited[node] == false) {
-                path.emplace_back(node);
+                best_path.emplace_back(node);
                 visited[node] = true;
             }
 
@@ -171,38 +193,49 @@ class PathMaker {
             if (next_node == -1) break;
             
             node = next_node;
-            edge_distance_list.emplace_back(next_edge_distance);
+            best_edge_distance_list.emplace_back(next_edge_distance);
         }
     }
 
     void deapth_first_search(int node) {
-        if (visited[node] == false) {
-            path.emplace_back(node);
-            visited[node] = true;
-        }
-        
-        if (node == goal) { return; }
-        
+        if (remaining_search_cnt == 0) return;
         remaining_search_cnt--;
-        if (remaining_search_cnt == 0) { return; }
+        
+        used[node] = true;
+        path.emplace_back(node);
+        
+        if (node == goal) {
+            if (ChangeMax(longest_distance, distance)) {
+                best_path = path;
+                best_edge_distance_list = edge_distance_list;
+            }
+        }
 
-        for (const Edge<T> &edge : graph.at(node)) {
+        for (const Edge<T> &edge : graph[node]) {
+            if (remaining_search_cnt == 0) break;
+            
             int next_node = edge.end;
-            if (visited[next_node] == true) { continue; }
+            if (used[next_node] == true) continue;
+            if (visited[next_node] == true && next_node != goal) continue;
+
             edge_distance_list.emplace_back(edge.distance);
+            distance += edge.distance;
+            
             deapth_first_search(next_node);
+            
             edge_distance_list.pop_back();
-            if (remaining_search_cnt == 0) { return; }
+            distance -= edge.distance;
         }
 
         path.pop_back();
-        visited[node] = false;
+        used[node] = false;
     }
 
     void run() {
         if (start == -1) {
             make_path_greedy(goal);
         } else {
+            used.resize(graph.size(), false);
             deapth_first_search(start);
         }
     }
@@ -223,7 +256,7 @@ class LargeCaseSolver {
     std::vector<bool> visited;
     std::vector<T> edge_distance_list;
 
-    LargeCaseSolver(Graph<T> &_graph) : graph(_graph) {}
+    LargeCaseSolver(Graph<T> &_graph) : graph(_graph), visited(_graph.size(), false) {}
 
     void make_initial_answer(int node) {
         while (true) {
@@ -262,8 +295,25 @@ class LargeCaseSolver {
                         kStartTemperature +
                         (kEndTemperature - kStartTemperature) * (timer.elapsed() / kTimeLimit);
 
+            if (path.size() <= 2) {
+                for (int i = 0; i < (int)graph.size(); i++) {
+                    visited[i] = false;
+                }
+                path.clear();
+                distance = 0;
+                
+                int start_node = rng(1, (int)graph.size());
+                make_initial_answer(start_node);
+
+                if (ChangeMax(longest_distance, distance)) {
+                    best_path = path;
+                }
+                
+                continue;
+            }
+
             int delete_path_length = rng(1, (int)path.size() / 2 + 1);
-            int start_path_id = rng(0, (int)path.size() - delete_path_length);
+            int start_path_id = rng(0, (int)path.size() - delete_path_length - 1);
             int end_path_id = start_path_id + delete_path_length;
 
             if (delete_path_length >= (int)path.size()) {
@@ -284,49 +334,83 @@ class LargeCaseSolver {
             }
 
             T new_distance = distance;
+            if (start_path_id > 0) new_distance -= edge_distance_list[start_path_id - 1];
             for (int i = start_path_id; i <= end_path_id; i++) {
                 visited[path[i]] = false;
-                if (i < end_path_id) new_distance -= edge_distance_list[i];
+                new_distance -= edge_distance_list[i];
             }
 
             int start_node = (start_path_id == 0 ? -1 : path[start_path_id - 1]);
             int goal_node = path[end_path_id + 1];
+            
             PathMaker<long double> path_maker(graph, visited, 
                                             start_node, goal_node,
-                                            delete_path_length * 4);
+                                            delete_path_length * 5);
             path_maker.run();
 
-            for (int i = 0; i < path_maker.edge_distance_list.size(); i++) {
-                new_distance += path_maker.edge_distance_list[i];
-            }
-
-            if (ChangeMax(longest_distance, new_distance)) {
-                best_path = path;
+            for (int i = 0; i < path_maker.best_edge_distance_list.size(); i++) {
+                new_distance += path_maker.best_edge_distance_list[i];
             }
 
             T diff = new_distance - distance;
             if (exp(diff / temperature) > rng()) {
                 std::vector<int> new_path;
+                std::vector<int> &path_add = path_maker.best_path;
+                std::vector<T> new_edge_distance_list;
+                std::vector<T> &edge_distance_add = path_maker.best_edge_distance_list;
                 if (start_node != -1) {
                     for (int i = 0; i < start_path_id; i++) {
                         new_path.emplace_back(path[i]);
                     }
-                    for (int i = 0; i < path_maker.path.size(); i++) { 
-                        new_path.emplace_back(path_maker.path[i]);
+                    for (int i = 0; i < path_add.size(); i++) { 
+                        if (path_add[i] != start_node && path_add[i] != goal_node) {
+                            new_path.emplace_back(path_add[i]);
+                            visited[path_add[i]] = true;
+                        }
                     }
                     for (int i = end_path_id + 1; i < path.size(); i++) {
                         new_path.emplace_back(path[i]);
+                    }
+
+                    for (int i = 0; i < start_path_id - 1; i++) {
+                        new_edge_distance_list.emplace_back(edge_distance_list[i]);
+                    }
+                    for (int i = 0; i < edge_distance_add.size(); i++) {
+                        new_edge_distance_list.emplace_back(edge_distance_add[i]);
+                    }
+                    for (int i = end_path_id + 1; i < edge_distance_list.size(); i++) {
+                        new_edge_distance_list.emplace_back(edge_distance_list[i]);
                     }
                 } else {
-                    std::reverse(path_maker.path.begin(), path_maker.path.end());
-                    for (int i = 0; i < path_maker.path.size(); i++) { 
-                        new_path.emplace_back(path_maker.path[i]);
+                    std::reverse(path_add.begin(), path_add.end());
+                    for (int i = 0; i < path_add.size(); i++) { 
+                        if (path_add[i] != start_node && path_add[i] != goal_node) {
+                            new_path.emplace_back(path_add[i]);
+                            visited[path_add[i]] = true;
+                        }
                     }
                     for (int i = end_path_id + 1; i < path.size(); i++) {
                         new_path.emplace_back(path[i]);
+                    }
+
+                    std::reverse(edge_distance_add.begin(), edge_distance_add.end());
+                    for (int i = 0; i < edge_distance_add.size(); i++) {
+                        new_edge_distance_list.emplace_back(edge_distance_add[i]);
+                    }
+                    for (int i = end_path_id + 1; i < edge_distance_list.size(); i++) {
+                        new_edge_distance_list.emplace_back(edge_distance_list[i]);
                     }
                 }
                 path = new_path;
+                edge_distance_list = new_edge_distance_list;
+                distance = new_distance;
+                if (ChangeMax(longest_distance, new_distance)) {
+                    best_path = path;
+                }
+            } else {
+                for (int i = start_path_id; i <= end_path_id; i++) {
+                    visited[path[i]] = true;
+                }
             }
         }
     }
@@ -338,7 +422,7 @@ class LargeCaseSolver {
 
         simulated_annealing();
 
-        return path;
+        return best_path;
     }
 };
 
@@ -419,7 +503,7 @@ class Solver {
             T distance = edge.distance;
 
             Edge<T> new_edge(start, end, distance);
-            graph.at(start).emplace_back(new_edge);
+            graph[start].emplace_back(new_edge);
         }
     }
 
@@ -449,8 +533,9 @@ class Solver {
 
     void output() {
         for (int node : route) {
-            std::cout << node << "\r\n";
+            std::cout << node << " ";
         }
+        std::cout << "\n";
     }
 };
 
