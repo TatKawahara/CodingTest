@@ -85,7 +85,7 @@ class SmallCaseSolver {
             }
         }
 
-         while (current_node != -1) {
+        while (current_node != -1) {
             path.emplace_back(current_node);
             int previous_node = previous_transition[current_set][current_node];
             current_set ^= (1 << current_node);
