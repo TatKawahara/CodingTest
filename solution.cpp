@@ -10,18 +10,6 @@
 #include <vector>
 
 template <class T>
-void out(const std::string s, std::vector<T> &a, const int add = 0) {
-    std::cout << s << "\n";
-    for (auto x : a) { std::cout << x + add << " "; }
-    std::cout << "\n";
-}
-
-template <class T>
-void out(const std::string s, const T x, const int add = 0) {
-    std::cout << s << "\n" << x + add << "\n";
-}
-
-template <class T>
 class Edge {
   public:
     int start, end;
