@@ -109,12 +109,12 @@ class RandomNumberGenerator {
     RandomNumberGenerator() : engine(seed_gen()) {}
     
     template <class T>
-    T operator()(T a, T b) {
+    T generate_integer(T a, T b) {
         std::uniform_int_distribution<T> dist(a, b - 1);
         return dist(engine);
     }
     
-    long double operator()() {
+    long double generate_decimal() {
         std::uniform_real_distribution<long double> dist;
         return dist(engine);
     }
@@ -290,7 +290,7 @@ class LargeCaseSolver {
                 path.clear();
                 distance = 0;
                 
-                int start_node = rng(1, (int)graph.size());
+                int start_node = rng.generate_integer(1, (int)graph.size());
                 make_initial_answer(start_node);
 
                 if (ChangeMax(longest_distance, distance)) {
@@ -300,8 +300,8 @@ class LargeCaseSolver {
                 continue;
             }
 
-            int delete_path_length = rng(1, (int)path.size() / 2 + 1);
-            int start_path_id = rng(0, (int)path.size() - delete_path_length - 1);
+            int delete_path_length = rng.generate_integer(1, (int)path.size() / 2 + 1);
+            int start_path_id = rng.generate_integer(0, (int)path.size() - delete_path_length - 1);
             int end_path_id = start_path_id + delete_path_length;
 
             if (delete_path_length >= (int)path.size()) {
@@ -311,7 +311,7 @@ class LargeCaseSolver {
                 path.clear();
                 distance = 0;
                 
-                int start_node = rng(1, (int)graph.size());
+                int start_node = rng.generate_integer(1, (int)graph.size());
                 make_initial_answer(start_node);
 
                 if (ChangeMax(longest_distance, distance)) {
@@ -349,7 +349,7 @@ class LargeCaseSolver {
             }
 
             T diff = new_distance - distance;
-            if (exp(diff / temperature) > rng()) {
+            if (exp(diff / temperature) > rng.generate_decimal()) {
                 std::vector<int> new_path;
                 std::vector<int> &path_add = path_maker.best_path;
                 std::vector<T> new_edge_distance_list;
