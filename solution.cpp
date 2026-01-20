@@ -266,7 +266,7 @@ class PathMaker {
     }
 };
 
- // 実行時間制限
+ // 実行時間制限 (単位はミリ秒)
 const int kTimeLimit = 1950;
 
 // 焼きなまし法の温度計算に使う
