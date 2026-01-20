@@ -26,7 +26,10 @@ class Edge {
 template <class T>
 using Graph = std::vector<std::vector<Edge<T>>>;
 
-// 最大値更新の処理を簡単に行うための関数
+// 最大値更新の処理を簡単にするための関数
+// ChangeMax(a, b) を呼ぶと、
+// ・a <- max(a, b) とする
+// ・更新が起こったら true、起こらなければ false を返す
 template <class T>
 bool ChangeMax(T &current_value, const T &new_value) {
     if (current_value < new_value) {
