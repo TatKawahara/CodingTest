@@ -9,7 +9,7 @@
 #include <utility>
 #include <vector>
 
-// 辺の構造体
+// 辺のクラス
 template <class T>
 class Edge {
   public:
