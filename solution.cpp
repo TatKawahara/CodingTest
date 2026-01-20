@@ -572,7 +572,7 @@ class Solver {
   public:
     Solver() = default;
 
-    void init() {
+    void initialize() {
         read_edges();
         compress_node_id();
         node_num = id_compressor.size();
@@ -605,7 +605,7 @@ class Solver {
 
 int main() {
     Solver<long double> solver;
-    solver.init();
+    solver.initialize();
     solver.solve();
     solver.output();
     return 0;
