@@ -266,7 +266,7 @@ class PathMaker {
  // 実行時間制限
 const int kTimeLimit = 1950;
 
-// 焼きなまし法の温度パラメータ
+// 焼きなまし法の温度計算に使う
 const int kStartTemperature = 150;
 const int kEndTemperature   = 0;    
 
