@@ -581,9 +581,11 @@ class Solver {
 
     void solve() {
         if (node_num <= 16) {
+            // 頂点数が少ない場合
             SmallCaseSolver<long double> small_case_solver(graph);
             route = small_case_solver.solve();
         } else {
+            // 頂点数が多い場合
             LargeCaseSolver<long double> large_case_solver(graph);
             route = large_case_solver.solve();
         }
